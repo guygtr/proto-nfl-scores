@@ -1,6 +1,6 @@
 // Pointage NFL en direct — prototype. Aucune clé requise.
 // 1) proxy local (server.py) ; 2) ESPN direct en secours (CORS pas toujours présent chez ESPN)
-const SOURCES = ["/api/scoreboard", "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"];
+const SOURCES = ["/api/scoreboard", "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"];
 const FAVORIS = ["NE", "BUF"]; // Patriots et Bills
 const REFRESH_MS = 30000;
 const TZ = "America/Toronto";
