@@ -1,0 +1,38 @@
+:root{--bg:#0b1d33;--card:#13294a;--txt:#eef3fa;--muted:#9fb2cc;--live:#e53935;--fav:#ffc845;--win:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;background:#081527ee;backdrop-filter:blur(6px);border-bottom:1px solid #1f3a60}
+h1{font-size:1.25rem;margin:0}
+.sub{margin:2px 0 0;color:var(--muted);font-size:.85rem}
+.refresh{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)}
+.refresh button{background:#1f3a60;color:var(--txt);border:0;border-radius:8px;font-size:1rem;width:32px;height:32px;cursor:pointer}
+.dot{width:8px;height:8px;border-radius:50%;background:#4caf50}
+.dot.busy{background:var(--fav)}
+.dot.err{background:var(--live)}
+main{padding:10px 12px 20px;max-width:1100px;margin:0 auto}
+h2{font-size:1rem;margin:14px 2px 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.grid{display:grid;gap:10px;grid-template-columns:1fr}
+@media(min-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border-radius:14px;padding:10px 12px;border:2px solid transparent}
+.card.fav{border-color:var(--fav);box-shadow:0 0 0 3px #ffc84522}
+.card.live{background:linear-gradient(180deg,#2a1b2e,#13294a 60%)}
+.status{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.badge{font-weight:700;padding:2px 8px;border-radius:999px;font-size:.72rem}
+.badge.in{background:var(--live);color:#fff;animation:pulse 1.6s infinite}
+.badge.post{background:#33475f;color:#dbe4ef}
+.badge.pre{background:#1f3a60;color:#cfe0f5}
+@keyframes pulse{50%{opacity:.6}}
+.team{display:flex;align-items:center;gap:10px;padding:4px 0}
+.team img{width:34px;height:34px;object-fit:contain}
+.team .name{flex:1;font-size:1rem}
+.team .rec{color:var(--muted);font-size:.75rem;margin-left:4px}
+.team .score{font-size:1.5rem;font-weight:800;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.team.lose .name,.team.lose .score{opacity:.55}
+.team.favteam .name{color:var(--fav);font-weight:700}
+.poss{color:var(--fav);font-size:.8rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:.78rem;color:var(--muted)}
+.situation{margin-top:4px;font-size:.8rem;color:#ffd9d9}
+.empty{color:var(--muted);font-size:.9rem}
+.error{background:#5a1d1d;padding:10px;border-radius:10px}
+footer{text-align:center;color:var(--muted);font-size:.75rem;padding:10px 0 24px}
