@@ -1,7 +1,34 @@
 // Pointage NFL en direct — prototype. Aucune clé requise.
 // 1) proxy local (server.py) ; 2) ESPN direct en secours (CORS pas toujours présent chez ESPN)
 const SOURCES = ["/api/scoreboard", "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"];
-const FAVORIS = ["NE", "BUF"]; // Patriots et Bills
+const FAVORIS_DEFAUT = ["NE", "BUF"]; // Patriots et Bills si rien n'est sauvegardé
+const CLE_FAVORIS = "pointage-nfl:equipes";
+// Liste statique des 32 équipes (abréviations ESPN), groupées par division.
+// L'API teams d'ESPN ne renvoie pas d'en-tête CORS : on évite donc un appel de plus.
+const DIVISIONS = [
+  ["AFC Est", [["BUF","Buffalo Bills"],["MIA","Miami Dolphins"],["NE","New England Patriots"],["NYJ","New York Jets"]]],
+  ["AFC Nord", [["BAL","Baltimore Ravens"],["CIN","Cincinnati Bengals"],["CLE","Cleveland Browns"],["PIT","Pittsburgh Steelers"]]],
+  ["AFC Sud", [["HOU","Houston Texans"],["IND","Indianapolis Colts"],["JAX","Jacksonville Jaguars"],["TEN","Tennessee Titans"]]],
+  ["AFC Ouest", [["DEN","Denver Broncos"],["KC","Kansas City Chiefs"],["LV","Las Vegas Raiders"],["LAC","Los Angeles Chargers"]]],
+  ["NFC Est", [["DAL","Dallas Cowboys"],["NYG","New York Giants"],["PHI","Philadelphia Eagles"],["WSH","Washington Commanders"]]],
+  ["NFC Nord", [["CHI","Chicago Bears"],["DET","Detroit Lions"],["GB","Green Bay Packers"],["MIN","Minnesota Vikings"]]],
+  ["NFC Sud", [["ATL","Atlanta Falcons"],["CAR","Carolina Panthers"],["NO","New Orleans Saints"],["TB","Tampa Bay Buccaneers"]]],
+  ["NFC Ouest", [["ARI","Arizona Cardinals"],["LAR","Los Angeles Rams"],["SF","San Francisco 49ers"],["SEA","Seattle Seahawks"]]],
+];
+const EQUIPES = Object.fromEntries(DIVISIONS.flatMap(([, l]) => l));
+const logoEquipe = (ab) => `https://a.espncdn.com/i/teamlogos/nfl/500/${ab.toLowerCase()}.png`;
+function lireFavoris() {
+  const p = new URLSearchParams(location.search).get("equipes");
+  if (p !== null) {
+    const l = p.split(",").map((s) => s.trim().toUpperCase()).filter((s) => EQUIPES[s]);
+    try { localStorage.setItem(CLE_FAVORIS, JSON.stringify(l)); } catch {}
+    return l;
+  }
+  try { const s = JSON.parse(localStorage.getItem(CLE_FAVORIS)); if (Array.isArray(s)) return s.filter((x) => EQUIPES[x]); } catch {}
+  return [...FAVORIS_DEFAUT];
+}
+let FAVORIS = lireFavoris();
+let derniereData = null;
 const REFRESH_MS = 30000;
 const TZ = "America/Toronto";
 
@@ -100,21 +127,10 @@ async function charger(manuel = false) {
   $("dot").className = "dot busy";
   $("reload").classList.add("tourne"); $("reload").setAttribute("aria-busy", "true");
   try {
-    const data = await recuperer();
-    const evs = trier(data.events || []);
-    const isFav = (e) => e.competitions[0].competitors.some((x) => FAVORIS.includes(x.team.abbreviation));
-    const favs = evs.filter(isFav);
-    const bye = (data.week?.teamsOnBye || []).filter((t) => FAVORIS.includes(t.abbreviation));
-    $("favs").innerHTML = favs.map(carte).join("") +
-      bye.map((t) => `<div class="carte fav"><div class="team favteam"><img src="${esc(t.logo)}" alt=""><span class="name">${esc(t.shortDisplayName)}</span><span class="rec">Semaine de congé</span></div></div>`).join("") ||
-      `<p class="vide">Pas de match des Patriots ou des Bills cette semaine.</p>`;
-    $("games").innerHTML = evs.filter((e) => !isFav(e)).map(carte).join("") || `<p class="vide">Aucun match.</p>`;
-    const nLive = evs.filter((e) => e.status.type.state === "in").length;
-    const typ = { 1: "Préparatoire", 2: "Saison", 3: "Séries" }[data.season?.type] || "";
-    $("week").textContent = `${typ} ${data.season?.year ?? ""} · Semaine ${data.week?.number ?? "?"}${nLive ? ` · ${nLive} en cours` : ""}`;
+    derniereData = await recuperer();
+    afficher(derniereData);
     $("updated").textContent = `Mis à jour à ${fmtHeure.format(new Date())}`;
     $("error").hidden = true;
-    $("count").textContent = `${evs.length} match${evs.length > 1 ? "s" : ""}`;
     $("dot").className = "dot";
     if (manuel) toast(`✅ Pointages à jour (${fmtHeure.format(new Date())})`);
   } catch (e) {
@@ -126,6 +142,90 @@ async function charger(manuel = false) {
     $("reload").classList.remove("tourne"); $("reload").removeAttribute("aria-busy");
   }
 }
+
+function nomsFavoris() {
+  const n = FAVORIS.map((a) => EQUIPES[a]?.split(" ").pop()).filter(Boolean);
+  return n.length <= 1 ? n.join("") : `${n.slice(0, -1).join(", ")} ou ${n[n.length - 1]}`;
+}
+
+function afficher(data) {
+    if (!FAVORIS.length) {
+      $("favs").innerHTML = `<div class="vide">Aucune équipe favorite pour l'instant.<br><button type="button" class="btn-neon choisir" data-ouvrir-equipes>⭐ Choisir mes équipes</button></div>`;
+    }
+    const evs = trier(data.events || []);
+    const isFav = (e) => e.competitions[0].competitors.some((x) => FAVORIS.includes(x.team.abbreviation));
+    const favs = evs.filter(isFav);
+    const bye = (data.week?.teamsOnBye || []).filter((t) => FAVORIS.includes(t.abbreviation));
+    if (FAVORIS.length) $("favs").innerHTML = favs.map(carte).join("") +
+      bye.map((t) => `<div class="carte fav"><div class="team favteam"><img src="${esc(t.logo)}" alt=""><span class="name">${esc(t.shortDisplayName)}</span><span class="rec">Semaine de congé</span></div></div>`).join("") ||
+      `<p class="vide">Pas de match des ${esc(nomsFavoris())} cette semaine.</p>`;
+    $("games").innerHTML = evs.filter((e) => !isFav(e)).map(carte).join("") || `<p class="vide">Aucun match.</p>`;
+    const nLive = evs.filter((e) => e.status.type.state === "in").length;
+    const typ = { 1: "Préparatoire", 2: "Saison", 3: "Séries" }[data.season?.type] || "";
+    $("week").textContent = `${typ} ${data.season?.year ?? ""} · Semaine ${data.week?.number ?? "?"}${nLive ? ` · ${nLive} en cours` : ""}`;
+    $("count").textContent = `${evs.length} match${evs.length > 1 ? "s" : ""}`;
+}
+
+// ---------- Panneau « Mes équipes » ----------
+const panneau = $("panneau-equipes");
+let declencheur = null;
+function construireListe() {
+  $("liste-equipes").innerHTML = DIVISIONS.map(([div, l]) => `<fieldset class="division"><legend>${div}</legend>${l.map(([ab, nom]) => `
+    <label class="choix" data-nom="${esc((nom + " " + ab).toLowerCase())}">
+      <input type="checkbox" value="${ab}" ${FAVORIS.includes(ab) ? "checked" : ""}>
+      <img src="${logoEquipe(ab)}" alt="" loading="lazy" width="32" height="32">
+      <span>${esc(nom)}</span>
+    </label>`).join("")}</fieldset>`).join("");
+  majCompte();
+}
+function cases() { return [...$("liste-equipes").querySelectorAll("input[type=checkbox]")]; }
+function majCompte() { const n = cases().filter((c) => c.checked).length; $("compte-equipes").textContent = `${n} sélectionnée${n > 1 ? "s" : ""}`; }
+function filtrer() {
+  const q = $("recherche-equipes").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  let vus = 0;
+  $("liste-equipes").querySelectorAll(".division").forEach((f) => {
+    let n = 0;
+    f.querySelectorAll(".choix").forEach((l) => { const ok = !q || l.dataset.nom.includes(q); l.hidden = !ok; if (ok) n++; });
+    f.hidden = !n; vus += n;
+  });
+  $("aucun-resultat").hidden = vus > 0;
+}
+function focusables() { return [...panneau.querySelectorAll("button, input, [href]")].filter((e) => !e.disabled && e.offsetParent !== null); }
+function ouvrirPanneau(e) {
+  declencheur = e?.currentTarget || document.activeElement;
+  construireListe(); $("recherche-equipes").value = ""; filtrer();
+  panneau.hidden = false; document.body.classList.add("fige");
+  requestAnimationFrame(() => { panneau.classList.add("ouvert"); $("recherche-equipes").focus(); });
+}
+function fermerPanneau() {
+  panneau.classList.remove("ouvert"); panneau.hidden = true; document.body.classList.remove("fige");
+  (declencheur && document.contains(declencheur) ? declencheur : $("btn-equipes")).focus();
+}
+function sauver() {
+  FAVORIS = cases().filter((c) => c.checked).map((c) => c.value);
+  try { localStorage.setItem(CLE_FAVORIS, JSON.stringify(FAVORIS)); } catch {}
+  const u = new URL(location.href); u.searchParams.set("equipes", FAVORIS.join(",")); history.replaceState(null, "", u);
+  fermerPanneau();
+  if (derniereData) afficher(derniereData);
+  toast(FAVORIS.length ? `⭐ Équipes enregistrées (${FAVORIS.length})` : "⭐ Aucune équipe favorite");
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-ouvrir-equipes]"); if (b) { ouvrirPanneau({ currentTarget: b }); } });
+$("btn-equipes").addEventListener("click", ouvrirPanneau);
+$("fermer-equipes").addEventListener("click", fermerPanneau);
+$("annuler-equipes").addEventListener("click", fermerPanneau);
+$("sauver-equipes").addEventListener("click", sauver);
+$("tout-effacer").addEventListener("click", () => { cases().forEach((c) => { c.checked = false; }); majCompte(); });
+$("liste-equipes").addEventListener("change", majCompte);
+$("recherche-equipes").addEventListener("input", filtrer);
+panneau.addEventListener("click", (e) => { if (e.target === panneau) fermerPanneau(); });
+panneau.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { e.preventDefault(); fermerPanneau(); return; }
+  if (e.key !== "Tab") return;
+  const f = focusables(); if (!f.length) return;
+  const premier = f[0], dernier = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+  else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+});
 
 $("reload").addEventListener("click", () => charger(true));
 document.addEventListener("visibilitychange", () => { if (!document.hidden) charger(); });

@@ -37,7 +37,7 @@
   --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
 
   /* Z-index (header < toast) */
-  --z-header: 20; --z-toast: 40;
+  --z-header: 20; --z-modal: 30; --z-toast: 40;
 }
 
 * { box-sizing: border-box; }
@@ -164,3 +164,39 @@ main { padding: var(--s-2) var(--s-4) var(--s-6); max-width: 1100px; margin: 0 a
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 
 .pied .credit{margin-top:.75rem;opacity:.85;font-size:.8rem;line-height:1.5;text-align:center}
+
+/* ---------- Panneau « Mes équipes » ---------- */
+.btn-etoile { font-size: 1.1rem; color: var(--c-fav); }
+.lien-modifier { margin-left: auto; min-height: 44px; padding: 0 var(--s-3); background: none; border: 0; color: var(--c-accent); font: 700 var(--t-xs)/1 var(--f-sans); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: var(--r-sm); }
+.choisir { margin-top: var(--s-3); color: var(--c-fav); }
+body.fige { overflow: hidden; }
+.visuellement-cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.voile { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: flex-end; justify-content: center; background: rgba(3, 6, 14, .7); }
+@media (min-width: 700px) { .voile { align-items: center; } }
+.panneau { display: flex; flex-direction: column; width: 100%; max-width: 560px; max-height: 92vh; border-radius: var(--r-lg) var(--r-lg) 0 0; background: rgba(12, 18, 34, .94); box-shadow: var(--glass-shadow); transform: translateY(16px); opacity: 0; transition: transform .25s, opacity .25s; padding-bottom: env(safe-area-inset-bottom); }
+@media (min-width: 700px) { .panneau { border-radius: var(--r-lg); } }
+.voile.ouvert .panneau { transform: none; opacity: 1; }
+.panneau__tete { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-3); padding: var(--s-4) var(--s-4) var(--s-2); }
+.panneau__tete h2 { margin: 0; font-size: var(--t-lg); font-weight: 800; }
+.recherche { display: block; padding: 0 var(--s-4) var(--s-2); }
+.recherche input { width: 100%; min-height: 44px; padding: 0 var(--s-3); font: 500 var(--t-md) var(--f-sans); color: var(--c-text); background: rgba(255, 255, 255, .06); border: 1px solid var(--c-border-strong); border-radius: var(--r-md); }
+.recherche input::placeholder { color: var(--c-text-muted); }
+.liste-equipes { overflow-y: auto; padding: 0 var(--s-4); flex: 1; overscroll-behavior: contain; }
+.division { border: 0; margin: 0 0 var(--s-3); padding: 0; }
+.division legend { padding: var(--s-2) 2px; font-size: var(--t-xs); font-weight: 700; color: var(--c-text-muted); text-transform: uppercase; letter-spacing: .12em; }
+.choix { display: flex; align-items: center; gap: var(--s-3); min-height: 48px; padding: var(--s-1) var(--s-3); margin-bottom: var(--s-1); border-radius: var(--r-md); border: 1px solid var(--c-border); background: var(--c-surface); cursor: pointer; }
+.choix[hidden], .division[hidden] { display: none; }
+.choix input { width: 22px; height: 22px; accent-color: var(--c-fav); flex: none; }
+.choix img { width: 32px; height: 32px; object-fit: contain; }
+.choix span { font-weight: 600; }
+.choix:has(input:checked) { border-color: rgba(253, 224, 71, .6); background: rgba(253, 224, 71, .08); }
+.choix:has(input:checked) span { color: var(--c-fav); }
+.choix:has(input:focus-visible) { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+#aucun-resultat { margin: 0 var(--s-4) var(--s-3); }
+.panneau__pied { display: flex; flex-wrap: nowrap; gap: var(--s-2); padding: var(--s-3) var(--s-4) var(--s-4); border-top: 1px solid var(--c-border); }
+.panneau__pied .espace { flex: 1; }
+.btn-discret { color: var(--c-text-muted); background: transparent; }
+.btn-plein { color: #0b1020; background: var(--c-fav); border-color: var(--c-fav); }
+@media (hover: hover) { .btn-plein:hover { background: #facc15; color: #0b1020; border-color: #facc15; box-shadow: 0 8px 30px rgba(253, 224, 71, .35); } }
+.voile[hidden] { display: none; }
+.panneau__pied .btn-neon { padding: 0 var(--s-3); white-space: nowrap; }

@@ -46,3 +46,11 @@ Captures avant/après : `screenshots/before-mobile.png`, `screenshots/after-mobi
 - Détails d'un match : dernier jeu, meneurs statistiques, probabilité de victoire.
 - Notification quand les Pats ou les Bills marquent.
 - Installer comme app (PWA) sur l'écran d'accueil.
+
+## Mes équipes (favoris modifiables)
+
+- Bouton ⭐ dans l'en-tête (ou « Modifier » à côté de la section *Mes équipes*) : ouvre un panneau accessible (dialogue modal, focus piégé, Échap pour fermer, cibles de 44 px et plus).
+- Les 32 équipes sont groupées par division (AFC/NFC), avec logo, recherche et cases à cocher (0 à n équipes).
+- La sélection est sauvegardée dans `localStorage` (clé `pointage-nfl:equipes`). Par défaut, si rien n'est sauvegardé : Patriots (NE) et Bills (BUF).
+- Lien à partager : `?equipes=KC,PHI` (abréviations ESPN). L'URL se met à jour à l'enregistrement ; `?equipes=` vide = aucune équipe.
+- La liste des équipes est intégrée au code (`DIVISIONS` dans `app.js`) : l'API `teams` d'ESPN ne renvoie pas d'en-tête CORS, donc on évite un appel de plus depuis github.io. Logos : `a.espncdn.com`.
