@@ -37,11 +37,11 @@ function tele(c) {
 function equipe(comp, c, state, possId) {
   const t = comp.team, fav = FAVORIS.includes(t.abbreviation);
   const rec = comp.records?.find((r) => r.type === "total")?.summary || "";
-  const lose = state === "post" && comp.winner === false;
+  const lose = state === "post" && comp.winner === false, win = state === "post" && comp.winner === true;
   const logo = t.logo || `https://a.espncdn.com/i/teamlogos/nfl/500/scoreboard/${t.abbreviation.toLowerCase()}.png`;
-  return `<div class="team ${fav ? "favteam" : ""} ${lose ? "lose" : ""}">
+  return `<div class="team ${fav ? "favteam" : ""} ${lose ? "lose" : ""} ${win ? "win" : ""}">
     <img src="${esc(logo)}" alt="" loading="lazy">
-    <span class="name">${esc(t.shortDisplayName || t.displayName)}${possId === t.id ? ' <span class="poss" title="Possession">🏈</span>' : ""}<span class="rec">${esc(rec)}</span></span>
+    <span class="name">${esc(t.shortDisplayName || t.displayName)}${possId === t.id ? ' <span class="poss" role="img" aria-label="Possession" title="Possession">🏈</span>' : ""}<span class="rec">${esc(rec)}</span></span>
     <span class="score">${state === "pre" ? "" : esc(comp.score)}</span>
   </div>`;
 }
@@ -62,8 +62,8 @@ function carte(ev) {
   const meta = [];
   if (cote?.details) meta.push(`📊 Ligne : ${esc(cote.details)}${cote.overUnder ? ` · O/U ${esc(cote.overUnder)}` : ""}`);
   const tv = tele(c); if (tv) meta.push(`📺 ${esc(tv)}`);
-  return `<article class="card ${s.cls === "in" ? "live" : ""} ${fav ? "fav" : ""}">
-    <div class="status"><span class="badge ${s.cls}">${s.badge}</span><span>${esc(s.txt)}</span></div>
+  return `<article class="carte ${s.cls === "in" ? "live" : ""} ${fav ? "fav" : ""}" aria-label="${esc(away.team.shortDisplayName)} contre ${esc(home.team.shortDisplayName)}, ${esc(s.badge.toLowerCase())}">
+    <div class="status"><span class="badge ${s.cls}">${s.badge}</span><span class="quand">${esc(s.txt)}</span></div>
     ${equipe(away, c, state, sit.possession)}
     ${equipe(home, c, state, sit.possession)}
     ${state === "in" && essai(sit) ? `<div class="situation">${esc(essai(sit))}${sit.isRedZone ? " · 🔴 zone payante" : ""}</div>` : ""}
@@ -87,8 +87,18 @@ async function recuperer() {
   throw derniere;
 }
 
-async function charger() {
+let toastTimer;
+function toast(msg, err) {
+  const t = $("toast");
+  t.textContent = msg; t.hidden = false; t.className = `toast ${err ? "err" : ""}`;
+  requestAnimationFrame(() => t.classList.add("visible"));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove("visible"); setTimeout(() => { t.hidden = true; }, 300); }, 2600);
+}
+
+async function charger(manuel = false) {
   $("dot").className = "dot busy";
+  $("reload").classList.add("tourne"); $("reload").setAttribute("aria-busy", "true");
   try {
     const data = await recuperer();
     const evs = trier(data.events || []);
@@ -96,23 +106,28 @@ async function charger() {
     const favs = evs.filter(isFav);
     const bye = (data.week?.teamsOnBye || []).filter((t) => FAVORIS.includes(t.abbreviation));
     $("favs").innerHTML = favs.map(carte).join("") +
-      bye.map((t) => `<div class="card fav"><div class="team favteam"><img src="${esc(t.logo)}" alt=""><span class="name">${esc(t.shortDisplayName)}</span><span class="rec">Semaine de congé</span></div></div>`).join("") ||
-      `<p class="empty">Pas de match des Patriots ou des Bills cette semaine.</p>`;
-    $("games").innerHTML = evs.filter((e) => !isFav(e)).map(carte).join("") || `<p class="empty">Aucun match.</p>`;
+      bye.map((t) => `<div class="carte fav"><div class="team favteam"><img src="${esc(t.logo)}" alt=""><span class="name">${esc(t.shortDisplayName)}</span><span class="rec">Semaine de congé</span></div></div>`).join("") ||
+      `<p class="vide">Pas de match des Patriots ou des Bills cette semaine.</p>`;
+    $("games").innerHTML = evs.filter((e) => !isFav(e)).map(carte).join("") || `<p class="vide">Aucun match.</p>`;
     const nLive = evs.filter((e) => e.status.type.state === "in").length;
     const typ = { 1: "Préparatoire", 2: "Saison", 3: "Séries" }[data.season?.type] || "";
     $("week").textContent = `${typ} ${data.season?.year ?? ""} · Semaine ${data.week?.number ?? "?"}${nLive ? ` · ${nLive} en cours` : ""}`;
     $("updated").textContent = `Mis à jour à ${fmtHeure.format(new Date())}`;
     $("error").hidden = true;
+    $("count").textContent = `${evs.length} match${evs.length > 1 ? "s" : ""}`;
     $("dot").className = "dot";
+    if (manuel) toast(`✅ Pointages à jour (${fmtHeure.format(new Date())})`);
   } catch (e) {
     $("error").textContent = `Impossible de charger les pointages (${e.message}). Nouvel essai dans 30 s.`;
     $("error").hidden = false;
     $("dot").className = "dot err";
+    if (manuel) toast("⚠️ Échec du rafraîchissement", true);
+  } finally {
+    $("reload").classList.remove("tourne"); $("reload").removeAttribute("aria-busy");
   }
 }
 
-$("reload").addEventListener("click", charger);
+$("reload").addEventListener("click", () => charger(true));
 document.addEventListener("visibilitychange", () => { if (!document.hidden) charger(); });
 charger();
 setInterval(charger, REFRESH_MS);
