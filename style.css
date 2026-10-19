@@ -200,3 +200,4 @@ body.fige { overflow: hidden; }
 @media (hover: hover) { .btn-plein:hover { background: #facc15; color: #0b1020; border-color: #facc15; box-shadow: 0 8px 30px rgba(253, 224, 71, .35); } }
 .voile[hidden] { display: none; }
 .panneau__pied .btn-neon { padding: 0 var(--s-3); white-space: nowrap; }
+.panneau__pied .btn-neon { letter-spacing: .05em; } #tout-effacer { padding: 0 var(--s-2); }
