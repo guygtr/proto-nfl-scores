@@ -90,7 +90,7 @@ h1 { margin: 0; font-size: var(--t-xl); font-weight: 800; letter-spacing: -.02em
 }
 @media (hover: hover) { .btn-neon:hover { background: #2563eb; color: #fff; border-color: #2563eb; box-shadow: 0 8px 30px rgba(59, 130, 246, .4); } }
 .btn-neon:active { transform: scale(.97); }
-.btn-icone { width: 44px; padding: 0; }
+.btn-icone { width: 44px; min-width: 44px; flex-shrink: 0; padding: 0; }
 .btn-neon.tourne svg { animation: tourne .8s linear infinite; }
 @keyframes tourne { to { transform: rotate(360deg); } }
 

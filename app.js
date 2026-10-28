@@ -1,6 +1,7 @@
 // Pointage NFL en direct — prototype. Aucune clé requise.
 // 1) proxy local (server.py) ; 2) ESPN direct en secours (CORS pas toujours présent chez ESPN)
-const SOURCES = ["/api/scoreboard", "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"];
+// Le relais /api/scoreboard n'existe qu'avec server.py : on l'ignore sur GitHub Pages (évite une erreur 404 en console).
+const SOURCES = [...(location.hostname.endsWith("github.io") ? [] : ["/api/scoreboard"]), "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard", "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"];
 const FAVORIS_DEFAUT = ["NE", "BUF"]; // Patriots et Bills si rien n'est sauvegardé
 const CLE_FAVORIS = "pointage-nfl:equipes";
 // Liste statique des 32 équipes (abréviations ESPN), groupées par division.

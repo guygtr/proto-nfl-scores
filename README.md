@@ -54,3 +54,11 @@ Captures avant/après : `screenshots/before-mobile.png`, `screenshots/after-mobi
 - La sélection est sauvegardée dans `localStorage` (clé `pointage-nfl:equipes`). Par défaut, si rien n'est sauvegardé : Patriots (NE) et Bills (BUF).
 - Lien à partager : `?equipes=KC,PHI` (abréviations ESPN). L'URL se met à jour à l'enregistrement ; `?equipes=` vide = aucune équipe.
 - La liste des équipes est intégrée au code (`DIVISIONS` dans `app.js`) : l'API `teams` d'ESPN ne renvoie pas d'en-tête CORS, donc on évite un appel de plus depuis github.io. Logos : `a.espncdn.com`.
+
+## Vérifié ordinateur + cellulaire (28 oct. 2026)
+
+Testé à 1280×800, 768 px et 390×844 : aucun débordement horizontal, aucun texte coupé, boutons d'au moins 40 px, pied de page GTR présent, aucune erreur dans la console.
+
+| Ordinateur | Cellulaire |
+|---|---|
+| ![](screenshots/audit-2026-10-28-ordi.png) | ![](screenshots/audit-2026-10-28-cell.png) |
